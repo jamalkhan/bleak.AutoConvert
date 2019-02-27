@@ -6,28 +6,32 @@ namespace bleak.AutoConvert
 {
     public static class AutoMap
     {
-        public static void Update(object input, object output)
+        public static void Update(object source, object destination, bool recursive = false, uint recursionLevel = 1)
         {
-            if (input == null)
+            if (recursive && recursionLevel == 0)
+            {
+                throw new ArgumentOutOfRangeException("Cannot use recursive with a recursionLevel of 0");
+            }
+
+            if (source == null)
             {
                 throw new ArgumentNullException("sourceObject");
             }
-            if (output == null)
+            if (destination == null)
             {
                 throw new ArgumentNullException("destinationObject");
             }
-            
-            var convertProperties = TypeDescriptor.GetProperties(output.GetType()).Cast<PropertyDescriptor>();
-            var entityProperties = TypeDescriptor.GetProperties(input.GetType()).Cast<PropertyDescriptor>();
-            foreach (var entityProperty in entityProperties)
+
+            var sourceProperties = TypeDescriptor.GetProperties(source.GetType()).Cast<PropertyDescriptor>();
+            var destionationProperties = TypeDescriptor.GetProperties(destination.GetType()).Cast<PropertyDescriptor>();
+            foreach (var sourceProperty in sourceProperties)
             {
-                var property = entityProperty;
-                var convertProperty = convertProperties.FirstOrDefault(prop => prop.Name == property.Name);
-                if (convertProperty != null)
+                var destinationProperty = destionationProperties.FirstOrDefault(prop => prop.Name == sourceProperty.Name);
+                if (destinationProperty != null)
                 {
-                    if (entityProperty.GetValue(input) != null)
+                    if (sourceProperty.GetValue(source) != null)
                     {
-                        PropertySetter.SetValue(output, convertProperty, entityProperty.GetValue(input).ToString());
+                        PropertySetter.SetValue(destination, destinationProperty, sourceProperty.GetValue(source), recursive, recursionLevel);
                     }
                 }
             }
